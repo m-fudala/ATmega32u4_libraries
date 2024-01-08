@@ -1,7 +1,7 @@
 #include "gpio.h"
 
-void pin_init(struct Pin *pin_struct, char port, char pin,
-            char direction, char pull_up) {
+void pin_init(struct Pin *pin_struct, unsigned char port, unsigned char pin,
+            unsigned char direction, unsigned char pull_up) {
     pin_struct->port = port;
     pin_struct->pin = pin;
     pin_struct->direction = direction;
@@ -107,19 +107,107 @@ void pin_init(struct Pin *pin_struct, char port, char pin,
     
 }
 
-void pin_write(struct Pin *pin_struct, char state) {
-    if (pin_struct->direction == OUTPUT) {
-        if (state == HIGH) {
-            PORTC |= 1 << pin_struct->pin;
+unsigned char pin_write(struct Pin *pin_struct, unsigned char state) {
+    if (pin_struct->direction != OUTPUT) {
+        return PIN_WRITE_INVALID_DIRECTION;
+    }
+    else if (state > HIGH) {
+        return PIN_WRITE_INVALID_STATE;
+    }
+
+    switch (pin_struct->port) {
+        case PB:
+        {
+            if (state == HIGH) {
+                PORTB |= 1 << pin_struct->pin;
+            }
+            else if (state == LOW) {
+                PORTB &= ~(1 << pin_struct->pin);
+            }
+
+            break;
         }
-        else if (state == LOW) {
-            PORTC &= ~(1 << pin_struct->pin);
+
+        case PC:
+        {
+            if (state == HIGH) {
+                PORTC |= 1 << pin_struct->pin;
+            }
+            else if (state == LOW) {
+                PORTC &= ~(1 << pin_struct->pin);
+            }
+
+            break;
         }
-        else {
-            // TODO
+
+        case PD:
+        {
+            if (state == HIGH) {
+                PORTD |= 1 << pin_struct->pin;
+            }
+            else if (state == LOW) {
+                PORTD &= ~(1 << pin_struct->pin);
+            }
+
+            break;
+        }
+
+        case PE:
+        {
+            if (state == HIGH) {
+                PORTE |= 1 << pin_struct->pin;
+            }
+            else if (state == LOW) {
+                PORTE &= ~(1 << pin_struct->pin);
+            }
+
+            break;
+        }
+
+        case PF:
+        {
+            if (state == HIGH) {
+                PORTF |= 1 << pin_struct->pin;
+            }
+            else if (state == LOW) {
+                PORTF &= ~(1 << pin_struct->pin);
+            }
+
+            break;
         }
     }
-    else {
-        // TODO
+
+    return PIN_WRITE_OK;
+}
+
+unsigned char pin_read(struct Pin *pin_struct) {
+    unsigned char pin_read_state = 0;
+    unsigned char read_mask = 1 << pin_struct->pin;
+
+    switch (pin_struct->port) {
+        case PB:
+        {
+            return pin_read_state = (PINB & read_mask) >> pin_struct->pin;
+        }
+
+        case PC:
+        {
+            return pin_read_state = (PINC & read_mask) >> pin_struct->pin;
+        }
+
+        case PD:
+        {
+            return pin_read_state = (PIND & read_mask) >> pin_struct->pin;
+        }
+
+        case PE:
+        {
+            return pin_read_state = (PINE & read_mask) >> pin_struct->pin;
+        }
+
+        case PF:
+        {
+            return pin_read_state = (PINF & read_mask) >> pin_struct->pin;
+        }
     }
 }

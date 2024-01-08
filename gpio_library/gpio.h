@@ -33,8 +33,19 @@ typedef struct Pin {
     char pull_up;
 } Pin;
 
-void pin_init(struct Pin *pin_struct, char port, char pin,
-            char direction, char pull_up);
-void pin_write(struct Pin *pin_struct, char state);
+void pin_init(struct Pin *pin_struct, unsigned char port, unsigned char pin,
+            unsigned char direction, unsigned char pull_up);
+
+
+enum Write_returns {
+    PIN_WRITE_OK,
+    PIN_WRITE_INVALID_DIRECTION,
+    PIN_WRITE_INVALID_STATE
+};
+
+unsigned char pin_write(struct Pin *pin_struct, unsigned char state);
+
+
+unsigned char pin_read(struct Pin *pin_struct);
 
 #endif
