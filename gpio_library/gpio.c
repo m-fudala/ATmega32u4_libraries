@@ -211,3 +211,11 @@ unsigned char pin_read(struct Pin *pin_struct) {
         }
     }
 }
+
+void global_pullup_disable() {
+    MCUCR &= ~(1 << PUD);
+}
+
+void global_pullup_enable() {
+    MCUCR |= 1 << PUD;
+}
