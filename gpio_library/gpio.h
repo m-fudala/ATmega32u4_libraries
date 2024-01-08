@@ -3,12 +3,28 @@
 
 #include <avr/io.h>
 
-#define INPUT 0
-#define OUTPUT 1
-#define LOW 0
-#define HIGH 1
-#define NO_PULL_UP 0
-#define PULL_UP 1
+enum Ports {
+    PB,
+    PC,
+    PD,
+    PE,
+    PF
+};
+
+enum Pin_direction {
+    INPUT,
+    OUTPUT
+};
+
+enum Pin_state {
+    LOW,
+    HIGH
+};
+
+enum Pull_up_state {
+    NO_PULL_UP,
+    PULL_UP
+};
 
 typedef struct Pin {
     char port;

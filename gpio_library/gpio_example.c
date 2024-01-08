@@ -5,7 +5,7 @@
 int main()
 {
     struct Pin pinC6;
-    pin_init(&pinC6, PORTC, PC6, OUTPUT, NO_PULL_UP);
+    pin_init(&pinC6, PC, PC6, OUTPUT, NO_PULL_UP);
 
     while (1) {
         pin_write(&pinC6, HIGH);
