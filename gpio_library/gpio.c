@@ -212,10 +212,39 @@ unsigned char pin_read(struct Pin *pin_struct) {
     }
 }
 
+void pin_toggle(struct Pin *pin_struct) {
+    switch (pin_struct->port) {
+        case PB:
+        {
+            PINB |= 1 << pin_struct->pin;
+        }
+
+        case PC:
+        {
+            PINC |= 1 << pin_struct->pin;
+        }
+
+        case PD:
+        {
+            PIND |= 1 << pin_struct->pin;
+        }
+
+        case PE:
+        {
+            PINE |= 1 << pin_struct->pin;
+        }
+
+        case PF:
+        {
+            PINF |= 1 << pin_struct->pin;
+        }
+    }
+}
+
 void global_pullup_disable() {
-    MCUCR &= ~(1 << PUD);
+    MCUCR |= 1 << PUD;
 }
 
 void global_pullup_enable() {
-    MCUCR |= 1 << PUD;
+    MCUCR &= ~(1 << PUD);
 }

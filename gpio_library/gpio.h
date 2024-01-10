@@ -48,6 +48,8 @@ unsigned char pin_write(struct Pin *pin_struct, unsigned char state);
 
 unsigned char pin_read(struct Pin *pin_struct);
 
+void pin_toggle(struct Pin *pin_struct);
+
 void global_pullup_disable();
 void global_pullup_enable();
 
