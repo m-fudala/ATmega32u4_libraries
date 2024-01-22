@@ -27,10 +27,10 @@ enum Pull_up_state {    // possible states of a pull-up
 };
 
 typedef struct Pin {    // struct describing a pin
-    char port;
-    char pin;
-    char direction;
-    char pull_up;
+    unsigned char port;
+    unsigned char pin;
+    unsigned char direction;
+    unsigned char pull_up;
 } Pin;
 
 // function initializing a pin
