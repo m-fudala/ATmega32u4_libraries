@@ -3,6 +3,21 @@
 
 #include <avr/io.h>
 
+enum I2C_ADDRESS {
+    MASTER
+};
 
+enum I2C_BIT_RATE {
+    I2C_100000,
+    I2C_400000
+};
+
+typedef struct I2C {
+    unsigned char address;
+    unsigned char bit_rate;
+} I2C;
+
+void i2c_init(struct I2C *i2c_struct, unsigned char address,
+            unsigned char bit_rate);
 
 #endif
