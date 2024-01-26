@@ -79,5 +79,55 @@ void i2c_write(struct I2C *i2c_struct, unsigned char slave_address,
     }
 }
 
+void i2c_write_bytes(struct I2C *i2c_struct, unsigned char slave_address,
+            unsigned char *bytes, unsigned char no_of_bytes) {
+    TWCR |= (1 << TWSTA) | (1 << TWINT) | (1 << TWEN);
+
+    while (!(TWCR & (_BV(TWINT))));
+
+    if (TW_STATUS != TW_START) {
+        return;
+    }
+
+    TWDR = slave_address | TW_WRITE;
+
+    TWCR &= ~(1 << TWSTA);
+    TWCR |= (1 << TWINT) | (1 << TWEN);
+
+    while (!(TWCR & (_BV(TWINT))));
+
+    switch (TW_STATUS) {
+        case TW_MT_SLA_ACK: {
+            for (unsigned char byte_i; byte_i < no_of_bytes; ++byte_i) {
+                if (TWCR & (1 << TWINT) >> TWINT) {
+                    TWDR = bytes[byte_i];
+
+                    TWCR |= (1 << TWINT) | (1 << TWEN);
+
+                    while (!(TWCR & (_BV(TWINT))));
+                }
+            }
+
+            if (TW_STATUS == TW_MT_DATA_ACK) {
+                TWCR |= (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
+            }
+
+            break;
+        }
+
+        case TW_MT_SLA_NACK: {
+            return;
+        }
+
+        case TW_MR_ARB_LOST: {
+            return;
+        }
+
+        default: {
+            return;
+        }
+    }
+}
+
 ISR(TWI_vect) {
 }

@@ -25,4 +25,7 @@ void i2c_init(struct I2C *i2c_struct, unsigned char address,
 void i2c_write(struct I2C *i2c_struct, unsigned char slave_address,
             unsigned char byte);
 
+void i2c_write_bytes(struct I2C *i2c_struct, unsigned char slave_address,
+            unsigned char *bytes, unsigned char no_of_bytes);
+
 #endif
