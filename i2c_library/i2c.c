@@ -10,26 +10,74 @@ void i2c_init(struct I2C *i2c_struct, unsigned char address,
     }
 
     switch (i2c_struct->bit_rate) {
-        case I2C_100000:
-        {
+        case I2C_100000: {
             TWBR = 72;
 
             break;
         }
 
-        case I2C_400000:
-        {
+        case I2C_400000: {
             TWBR = 12;
 
             break;
         }
 
-        default: 
-        {
+        default: {
             return;
         }
     }
 
-    TWSR &= ~(1 << TWPS1) & ~(1 << TWPS0);
-    TWCR |= (1 << TWEN) | (1 << TWIE);
+    TWSR &= ~((1 << TWPS1) | (1 << TWPS0));
+    TWCR |= (1 << TWIE);
+}
+
+void i2c_write(struct I2C *i2c_struct, unsigned char slave_address,
+            unsigned char byte) {
+    TWCR |= (1 << TWSTA) | (1 << TWINT) | (1 << TWEN);
+
+    while (!(TWCR & (_BV(TWINT))));
+
+    if (TW_STATUS != TW_START) {
+        return;
+    }
+
+    TWDR = slave_address | TW_WRITE;
+
+    TWCR &= ~(1 << TWSTA);
+    TWCR |= (1 << TWINT) | (1 << TWEN);
+
+    while (!(TWCR & (_BV(TWINT))));
+
+    switch (TW_STATUS) {
+        case TW_MT_SLA_ACK: {
+            if (TWCR & (1 << TWINT) >> TWINT) {
+                TWDR = byte;
+
+                TWCR |= (1 << TWINT) | (1 << TWEN);
+
+                while (!(TWCR & (_BV(TWINT))));
+
+                if (TW_STATUS == TW_MT_DATA_ACK) {
+                    TWCR |= (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
+                }
+            }
+
+            break;
+        }
+
+        case TW_MT_SLA_NACK: {
+            return;
+        }
+
+        case TW_MR_ARB_LOST: {
+            return;
+        }
+
+        default: {
+            return;
+        }
+    }
+}
+
+ISR(TWI_vect) {
 }
