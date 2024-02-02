@@ -1,12 +1,10 @@
 #include "gpio.h"
 
 void pin_init(struct Pin *pin_struct, volatile unsigned char *port,
-            unsigned char pin, unsigned char direction,
-            unsigned char pull_up) {
+            unsigned char pin, unsigned char direction) {
     pin_struct->port = (unsigned char *) port;
     pin_struct->pin = pin;
     pin_struct->direction = direction;
-    pin_struct->pull_up = pull_up;
 
     if (pin_struct->port == &PORTB) {
         pin_struct->direction_reg = (unsigned char *) &DDRB;
@@ -25,18 +23,27 @@ void pin_init(struct Pin *pin_struct, volatile unsigned char *port,
         pin_struct->pin_reg = (unsigned char *) &PINF;
     }
 
-    if (pin_struct->direction == OUTPUT) {
-        *pin_struct->direction_reg |= 1 << pin_struct->pin;
-    } else if (pin_struct->direction == INPUT) {
-        *pin_struct->direction_reg &= ~(1 << pin_struct->pin);
+    switch (pin_struct->direction) {
+        case OUTPUT: {
+            *pin_struct->direction_reg |= 1 << pin_struct->pin;
 
-        if (pin_struct->pull_up == PULL_UP) {
-            *pin_struct->port |= 1 << pin_struct->pin;
+            break;
         }
-        else if (pin_struct->pull_up == NO_PULL_UP) {
+        
+        case INPUT: {
+            *pin_struct->direction_reg &= ~(1 << pin_struct->pin);
             *pin_struct->port &= ~(1 << pin_struct->pin);
+
+            break;
         }
-    }    
+
+        case INPUT_PULLUP: {
+            *pin_struct->direction_reg &= ~(1 << pin_struct->pin);
+            *pin_struct->port |= 1 << pin_struct->pin;
+
+            break;
+        }
+    }   
 }
 
 unsigned char pin_write(struct Pin *pin_struct, unsigned char state) {

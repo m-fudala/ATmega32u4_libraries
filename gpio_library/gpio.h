@@ -5,17 +5,13 @@
 
 enum Pin_direction {    // possible directions for a pin
     INPUT,
-    OUTPUT
+    OUTPUT,
+    INPUT_PULLUP
 };
 
 enum Pin_state {    // possible states for a pin
     LOW,
     HIGH
-};
-
-enum Pull_up_state {    // possible states of a pull-up
-    NO_PULL_UP,
-    PULL_UP
 };
 
 typedef struct Pin {    // struct describing a pin
@@ -29,7 +25,7 @@ typedef struct Pin {    // struct describing a pin
 
 // function initializing a pin
 void pin_init(struct Pin *pin_struct, volatile unsigned char *port,
-            unsigned char pin, unsigned char direction, unsigned char pull_up);
+            unsigned char pin, unsigned char direction);
 
 
 enum Write_returns {    // enum holding possible returns of pin_write function
