@@ -3,8 +3,8 @@
 int main()
 {
     struct Pin LED, Button;
-    pin_init(&LED, PC, PC6, OUTPUT, NO_PULL_UP);
-    pin_init(&Button, PD, PD7, INPUT, PULL_UP);
+    pin_init(&LED, &PORTC, PC6, OUTPUT, NO_PULL_UP);
+    pin_init(&Button, &PORTD, PD7, INPUT, PULL_UP);
 
     unsigned char read_result = 0, write_result = 0;
 

@@ -3,14 +3,6 @@
 
 #include <avr/io.h>
 
-enum Ports {    // enum holding port descriptions
-    PB,
-    PC,
-    PD,
-    PE,
-    PF
-};
-
 enum Pin_direction {    // possible directions for a pin
     INPUT,
     OUTPUT
@@ -27,15 +19,17 @@ enum Pull_up_state {    // possible states of a pull-up
 };
 
 typedef struct Pin {    // struct describing a pin
-    unsigned char port;
+    unsigned char *port;
+    unsigned char *direction_reg;
+    unsigned char *pin_reg;
     unsigned char pin;
     unsigned char direction;
     unsigned char pull_up;
 } Pin;
 
 // function initializing a pin
-void pin_init(struct Pin *pin_struct, unsigned char port, unsigned char pin,
-            unsigned char direction, unsigned char pull_up);
+void pin_init(struct Pin *pin_struct, volatile unsigned char *port,
+            unsigned char pin, unsigned char direction, unsigned char pull_up);
 
 
 enum Write_returns {    // enum holding possible returns of pin_write function
