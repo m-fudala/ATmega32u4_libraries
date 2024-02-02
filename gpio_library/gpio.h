@@ -20,7 +20,6 @@ typedef struct Pin {    // struct describing a pin
     unsigned char *pin_reg;
     unsigned char pin;
     unsigned char direction;
-    unsigned char pull_up;
 } Pin;
 
 // function initializing a pin
