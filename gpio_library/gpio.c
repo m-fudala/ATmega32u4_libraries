@@ -63,11 +63,7 @@ unsigned char pin_write(struct Pin *pin_struct, unsigned char state) {
 }
 
 unsigned char pin_read(struct Pin *pin_struct) {
-    unsigned char pin_read_state = 0;
-    unsigned char read_mask = 1 << pin_struct->pin;
-
-    return pin_read_state = (*pin_struct->pin_reg & read_mask)
-                             >> pin_struct->pin;
+    return (*pin_struct->pin_reg & (1 << pin_struct->pin)) >> pin_struct->pin;
 }
 
 void pin_toggle(struct Pin *pin_struct) {
