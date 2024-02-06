@@ -1,6 +1,11 @@
 #include "i2c.h"
 
 void i2c_master_init(unsigned char bit_rate) {
+    slave_address = 0;
+    bytes_to_write = 0;
+    byte_buffer = 0;
+    bytes_sent = 0;
+
     cli();
 
     switch (bit_rate) {
@@ -27,70 +32,19 @@ void i2c_master_init(unsigned char bit_rate) {
     sei();
 }
 
-void i2c_write(unsigned char slave_address, unsigned char byte) {
-    // TWCR |= _BV(TWSTA) | _BV(TWINT) | _BV(TWEN);
+void i2c_write(unsigned char address, unsigned char *bytes,
+                unsigned char no_of_bytes) {
+    slave_address = address;
+    byte_buffer = bytes;
+    bytes_to_write = no_of_bytes;
 
-    send_start();
-
-    // while (!(TWCR & (_BV(TWINT))));
-
-    // if (TW_STATUS != TW_START) {
-    //     return;
-    // }
-
-    // TWDR = slave_address | TW_WRITE;
-
-    // TWCR &= ~_BV(TWSTA);
-    // TWCR |= _BV(TWINT) | _BV(TWEN);
-
-    // while (!(TWCR & (_BV(TWINT))));
-
-    // switch (TW_STATUS) {
-    //     case TW_MT_SLA_ACK: {
-    //         if (TWCR & _BV(TWINT) >> TWINT) {
-    //             TWDR = byte;
-
-    //             TWCR |= _BV(TWINT) | _BV(TWEN);
-
-    //             while (!(TWCR & (_BV(TWINT))));
-
-    //             if (TW_STATUS == TW_MT_DATA_ACK) {
-    //                 TWCR |= _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
-    //             }
-    //         }
-
-    //         break;
-    //     }
-
-    //     case TW_MT_SLA_NACK: {
-    //         return;
-    //     }
-
-    //     case TW_MR_ARB_LOST: {
-    //         return;
-    //     }
-
-    //     default: {
-    //         return;
-    //     }
-    // }
-}
-
-void send_start() {
     TWCR |= _BV(TWSTA) | _BV(TWINT) | _BV(TWEN);
 }
 
-void react_to_codes() {
-    // if (TW_STATUS != TW_START) {
-    //     return;
-    // }
-
-    // while (!(TWCR & (_BV(TWINT))));
-
+ISR(TWI_vect) {
     switch (TW_STATUS) {
         case TW_START: {
-            // TWDR = slave_address | TW_WRITE;
-            TWDR = (8 << 1) | TW_WRITE;
+            TWDR = slave_address | TW_WRITE;
 
             TWCR &= ~_BV(TWSTA);
             TWCR |= _BV(TWINT) | _BV(TWEN);
@@ -100,23 +54,27 @@ void react_to_codes() {
 
         case TW_MT_SLA_ACK: {
             if (TWCR & _BV(TWINT) >> TWINT) {
-                // TWDR = byte;
-                TWDR = '0';
+                TWDR = byte_buffer[bytes_sent];
+
+                ++bytes_sent;
 
                 TWCR |= _BV(TWINT) | _BV(TWEN);
-
-                // while (!(TWCR & (_BV(TWINT))));
-
-                // if (TW_STATUS == TW_MT_DATA_ACK) {
-                //     TWCR |= _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
-                // }
             }
 
             break;
         }
 
         case TW_MT_DATA_ACK: {
-            TWCR |= _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
+            if (!(bytes_sent == bytes_to_write)) {
+                TWDR = byte_buffer[bytes_sent];
+
+                ++bytes_sent;
+
+                TWCR |= _BV(TWINT) | _BV(TWEN);
+            } else {
+                TWCR |= _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
+                bytes_sent = 0;
+            }
 
             break;
         }
@@ -133,58 +91,4 @@ void react_to_codes() {
             return;
         }
     }
-}
-
-// void i2c_write_bytes(unsigned char slave_address, unsigned char *bytes,
-//                     unsigned char no_of_bytes) {
-//     TWCR |= _BV(TWSTA) | _BV(TWINT) | _BV(TWEN);
-
-//     while (!(TWCR & (_BV(TWINT))));
-
-//     if (TW_STATUS != TW_START) {
-//         return;
-//     }
-
-//     TWDR = slave_address | TW_WRITE;
-
-//     TWCR &= ~_BV(TWSTA);
-//     TWCR |= _BV(TWINT) | _BV(TWEN);
-
-//     while (!(TWCR & (_BV(TWINT))));
-
-//     switch (TW_STATUS) {
-//         case TW_MT_SLA_ACK: {
-//             for (unsigned char byte_i; byte_i < no_of_bytes; ++byte_i) {
-//                 if (TWCR & _BV(TWINT) >> TWINT) {
-//                     TWDR = bytes[byte_i];
-
-//                     TWCR |= _BV(TWINT) | _BV(TWEN);
-
-//                     while (!(TWCR & (_BV(TWINT))));
-//                 }
-//             }
-
-//             if (TW_STATUS == TW_MT_DATA_ACK) {
-//                 TWCR |= _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
-//             }
-
-//             break;
-//         }
-
-//         case TW_MT_SLA_NACK: {
-//             return;
-//         }
-
-//         case TW_MR_ARB_LOST: {
-//             return;
-//         }
-
-//         default: {
-//             return;
-//         }
-//     }
-// }
-
-ISR(TWI_vect) {
-    react_to_codes();
 }
