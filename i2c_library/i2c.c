@@ -1,15 +1,9 @@
 #include "i2c.h"
 
-void i2c_init(struct I2C *i2c_struct, unsigned char address,
-            unsigned char bit_rate) {
-    i2c_struct->address = address;
-    i2c_struct->bit_rate = bit_rate;
+void i2c_master_init(unsigned char bit_rate) {
+    cli();
 
-    if (i2c_struct->address) {
-        // TODO: set address in slave mode 
-    }
-
-    switch (i2c_struct->bit_rate) {
+    switch (bit_rate) {
         case I2C_100000: {
             TWBR = 72;
 
@@ -27,40 +21,102 @@ void i2c_init(struct I2C *i2c_struct, unsigned char address,
         }
     }
 
-    TWSR &= ~((1 << TWPS1) | (1 << TWPS0));
-    TWCR |= (1 << TWIE);
+    TWSR &= ~(_BV(TWPS1) | _BV(TWPS0));
+    TWCR |= _BV(TWIE);
+
+    sei();
 }
 
-void i2c_write(struct I2C *i2c_struct, unsigned char slave_address,
-            unsigned char byte) {
-    TWCR |= (1 << TWSTA) | (1 << TWINT) | (1 << TWEN);
+void i2c_write(unsigned char slave_address, unsigned char byte) {
+    // TWCR |= _BV(TWSTA) | _BV(TWINT) | _BV(TWEN);
 
-    while (!(TWCR & (_BV(TWINT))));
+    send_start();
 
-    if (TW_STATUS != TW_START) {
-        return;
-    }
+    // while (!(TWCR & (_BV(TWINT))));
 
-    TWDR = slave_address | TW_WRITE;
+    // if (TW_STATUS != TW_START) {
+    //     return;
+    // }
 
-    TWCR &= ~(1 << TWSTA);
-    TWCR |= (1 << TWINT) | (1 << TWEN);
+    // TWDR = slave_address | TW_WRITE;
 
-    while (!(TWCR & (_BV(TWINT))));
+    // TWCR &= ~_BV(TWSTA);
+    // TWCR |= _BV(TWINT) | _BV(TWEN);
+
+    // while (!(TWCR & (_BV(TWINT))));
+
+    // switch (TW_STATUS) {
+    //     case TW_MT_SLA_ACK: {
+    //         if (TWCR & _BV(TWINT) >> TWINT) {
+    //             TWDR = byte;
+
+    //             TWCR |= _BV(TWINT) | _BV(TWEN);
+
+    //             while (!(TWCR & (_BV(TWINT))));
+
+    //             if (TW_STATUS == TW_MT_DATA_ACK) {
+    //                 TWCR |= _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
+    //             }
+    //         }
+
+    //         break;
+    //     }
+
+    //     case TW_MT_SLA_NACK: {
+    //         return;
+    //     }
+
+    //     case TW_MR_ARB_LOST: {
+    //         return;
+    //     }
+
+    //     default: {
+    //         return;
+    //     }
+    // }
+}
+
+void send_start() {
+    TWCR |= _BV(TWSTA) | _BV(TWINT) | _BV(TWEN);
+}
+
+void react_to_codes() {
+    // if (TW_STATUS != TW_START) {
+    //     return;
+    // }
+
+    // while (!(TWCR & (_BV(TWINT))));
 
     switch (TW_STATUS) {
+        case TW_START: {
+            // TWDR = slave_address | TW_WRITE;
+            TWDR = (8 << 1) | TW_WRITE;
+
+            TWCR &= ~_BV(TWSTA);
+            TWCR |= _BV(TWINT) | _BV(TWEN);
+
+            break;
+        }
+
         case TW_MT_SLA_ACK: {
-            if (TWCR & (1 << TWINT) >> TWINT) {
-                TWDR = byte;
+            if (TWCR & _BV(TWINT) >> TWINT) {
+                // TWDR = byte;
+                TWDR = '0';
 
-                TWCR |= (1 << TWINT) | (1 << TWEN);
+                TWCR |= _BV(TWINT) | _BV(TWEN);
 
-                while (!(TWCR & (_BV(TWINT))));
+                // while (!(TWCR & (_BV(TWINT))));
 
-                if (TW_STATUS == TW_MT_DATA_ACK) {
-                    TWCR |= (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
-                }
+                // if (TW_STATUS == TW_MT_DATA_ACK) {
+                //     TWCR |= _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
+                // }
             }
+
+            break;
+        }
+
+        case TW_MT_DATA_ACK: {
+            TWCR |= _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
 
             break;
         }
@@ -79,55 +135,56 @@ void i2c_write(struct I2C *i2c_struct, unsigned char slave_address,
     }
 }
 
-void i2c_write_bytes(struct I2C *i2c_struct, unsigned char slave_address,
-            unsigned char *bytes, unsigned char no_of_bytes) {
-    TWCR |= (1 << TWSTA) | (1 << TWINT) | (1 << TWEN);
+// void i2c_write_bytes(unsigned char slave_address, unsigned char *bytes,
+//                     unsigned char no_of_bytes) {
+//     TWCR |= _BV(TWSTA) | _BV(TWINT) | _BV(TWEN);
 
-    while (!(TWCR & (_BV(TWINT))));
+//     while (!(TWCR & (_BV(TWINT))));
 
-    if (TW_STATUS != TW_START) {
-        return;
-    }
+//     if (TW_STATUS != TW_START) {
+//         return;
+//     }
 
-    TWDR = slave_address | TW_WRITE;
+//     TWDR = slave_address | TW_WRITE;
 
-    TWCR &= ~(1 << TWSTA);
-    TWCR |= (1 << TWINT) | (1 << TWEN);
+//     TWCR &= ~_BV(TWSTA);
+//     TWCR |= _BV(TWINT) | _BV(TWEN);
 
-    while (!(TWCR & (_BV(TWINT))));
+//     while (!(TWCR & (_BV(TWINT))));
 
-    switch (TW_STATUS) {
-        case TW_MT_SLA_ACK: {
-            for (unsigned char byte_i; byte_i < no_of_bytes; ++byte_i) {
-                if (TWCR & (1 << TWINT) >> TWINT) {
-                    TWDR = bytes[byte_i];
+//     switch (TW_STATUS) {
+//         case TW_MT_SLA_ACK: {
+//             for (unsigned char byte_i; byte_i < no_of_bytes; ++byte_i) {
+//                 if (TWCR & _BV(TWINT) >> TWINT) {
+//                     TWDR = bytes[byte_i];
 
-                    TWCR |= (1 << TWINT) | (1 << TWEN);
+//                     TWCR |= _BV(TWINT) | _BV(TWEN);
 
-                    while (!(TWCR & (_BV(TWINT))));
-                }
-            }
+//                     while (!(TWCR & (_BV(TWINT))));
+//                 }
+//             }
 
-            if (TW_STATUS == TW_MT_DATA_ACK) {
-                TWCR |= (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
-            }
+//             if (TW_STATUS == TW_MT_DATA_ACK) {
+//                 TWCR |= _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
+//             }
 
-            break;
-        }
+//             break;
+//         }
 
-        case TW_MT_SLA_NACK: {
-            return;
-        }
+//         case TW_MT_SLA_NACK: {
+//             return;
+//         }
 
-        case TW_MR_ARB_LOST: {
-            return;
-        }
+//         case TW_MR_ARB_LOST: {
+//             return;
+//         }
 
-        default: {
-            return;
-        }
-    }
-}
+//         default: {
+//             return;
+//         }
+//     }
+// }
 
 ISR(TWI_vect) {
+    react_to_codes();
 }
