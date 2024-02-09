@@ -12,12 +12,16 @@ enum I2C_BIT_RATE {
 
 void i2c_master_init(unsigned char bit_rate);
 
+volatile unsigned char operation;
 volatile unsigned char slave_address;
 volatile unsigned char bytes_to_write;
 volatile unsigned char *byte_buffer;
 volatile unsigned char bytes_sent;
 
 void i2c_write(unsigned char address, unsigned char *bytes,
+                unsigned char no_of_bytes);
+
+void i2c_read(unsigned char address, unsigned char *bytes,
                 unsigned char no_of_bytes);
 
 #endif
