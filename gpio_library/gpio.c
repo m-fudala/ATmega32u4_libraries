@@ -1,250 +1,126 @@
 #include "gpio.h"
 
-void pin_init(struct Pin *pin_struct, unsigned char port, unsigned char pin,
-            unsigned char direction, unsigned char pull_up) {
-    pin_struct->port = port;
-    pin_struct->pin = pin;
-    pin_struct->direction = direction;
-    pin_struct->pull_up = pull_up;
+unsigned char pin_init(struct Pin *pin_struct, volatile unsigned char *port,
+                        unsigned char pin, unsigned char direction) {
+    pin_struct->port = (unsigned char *) port;
+    pin_struct->pin_and_direction = pin | (direction << 4);
 
-    switch (pin_struct->port) {
-        case PB:
-        {
-            if (pin_struct->direction == OUTPUT) {
-                DDRB |= 1 << pin_struct->pin;
-            }
-            else if (pin_struct->direction == INPUT) {
-                DDRB &= ~(1 << pin_struct->pin);
+    // assign DDRx and PINx registers depending on provided port
+    if (pin_struct->port == (unsigned char *) &PORTB) {
+        // check if given pin number is possible
+        if ((pin_struct->pin_and_direction & PIN_MASK) > 7) {
+            return PIN_INIT_INVALID_PIN;
+        }
 
-                if (pin_struct->pull_up == PULL_UP) {
-                    PORTB |= 1 << pin_struct->pin;
-                }
-                else if (pin_struct->pull_up == NO_PULL_UP) {
-                    PORTB &= ~(1 << pin_struct->pin);
-                }
-            }
+        pin_struct->direction_reg = (unsigned char *) &DDRB;
+        pin_struct->pin_reg = (unsigned char *) &PINB;
+    } else if (pin_struct->port == (unsigned char *) &PORTC) {
+        if (((pin_struct->pin_and_direction & PIN_MASK) > 7) || 
+            ((pin_struct->pin_and_direction & PIN_MASK) < 6)) {
+            return PIN_INIT_INVALID_PIN;
+        }
+
+        pin_struct->direction_reg = (unsigned char *) &DDRC;
+        pin_struct->pin_reg = (unsigned char *) &PINC;
+    } else if (pin_struct->port == (unsigned char *) &PORTD) {
+        if ((pin_struct->pin_and_direction & PIN_MASK) > 7) {
+            return PIN_INIT_INVALID_PIN;
+        }
+
+        pin_struct->direction_reg = (unsigned char *) &DDRD;
+        pin_struct->pin_reg = (unsigned char *) &PIND;
+    } else if (pin_struct->port == (unsigned char *) &PORTE) {
+        if (((pin_struct->pin_and_direction & PIN_MASK) != 2) || 
+            ((pin_struct->pin_and_direction & PIN_MASK) != 6)) {
+            return PIN_INIT_INVALID_PIN;
+        }
+
+        pin_struct->direction_reg = (unsigned char *) &DDRE;
+        pin_struct->pin_reg = (unsigned char *) &PINE;
+    } else if (pin_struct->port == (unsigned char *) &PORTF) {
+        if (((pin_struct->pin_and_direction & PIN_MASK) > 7) || 
+            ((pin_struct->pin_and_direction & PIN_MASK) == 2) || 
+            ((pin_struct->pin_and_direction & PIN_MASK) == 3)) {
+            return PIN_INIT_INVALID_PIN;
+        }
+        
+        pin_struct->direction_reg = (unsigned char *) &DDRF;
+        pin_struct->pin_reg = (unsigned char *) &PINF;
+    } else {
+        return PIN_INIT_INVALID_PORT;   // when port was not recognized
+    }
+
+    // check for pin direction validity
+    if ((pin_struct->pin_and_direction >> 4) > INPUT_PULLUP) {
+        return PIN_INIT_INVALID_DIRECTION;
+    }
+
+    // configure pin's direction
+    switch (pin_struct->pin_and_direction >> 4) {
+        case OUTPUT: {
+            *pin_struct->direction_reg |=
+                1 << (pin_struct->pin_and_direction & PIN_MASK);
+                                                // write 1 to DDRxn
+
+            break;
+        }
+        
+        case INPUT: {
+            *pin_struct->direction_reg &=
+                ~(1 << (pin_struct->pin_and_direction & PIN_MASK));
+                                                // write 0 to DDRxn
+            *pin_struct->port &=
+                ~(1 << (pin_struct->pin_and_direction & PIN_MASK));
+                                                // write 0 to PORTxn
 
             break;
         }
 
-        case PC:
-        {
-            if (pin_struct->direction == OUTPUT) {
-                DDRC |= 1 << pin_struct->pin;
-            }
-            else if (pin_struct->direction == INPUT) {
-                DDRC &= ~(1 << pin_struct->pin);
-
-                if (pin_struct->pull_up == PULL_UP) {
-                    PORTC |= 1 << pin_struct->pin;
-                }
-                else if (pin_struct->pull_up == NO_PULL_UP) {
-                    PORTC &= ~(1 << pin_struct->pin);
-                }
-            }
-
-            break;
-        }
-
-        case PD:
-        {
-            if (pin_struct->direction == OUTPUT) {
-                DDRD |= 1 << pin_struct->pin;
-            }
-            else if (pin_struct->direction == INPUT) {
-                DDRD &= ~(1 << pin_struct->pin);
-
-                if (pin_struct->pull_up == PULL_UP) {
-                    PORTD |= 1 << pin_struct->pin;
-                }
-                else if (pin_struct->pull_up == NO_PULL_UP) {
-                    PORTD &= ~(1 << pin_struct->pin);
-                }
-            }
-
-            break;
-        }
-
-        case PE:
-        {
-            if (pin_struct->direction == OUTPUT) {
-                DDRE |= 1 << pin_struct->pin;
-            }
-            else if (pin_struct->direction == INPUT) {
-                DDRE &= ~(1 << pin_struct->pin);
-
-                if (pin_struct->pull_up == PULL_UP) {
-                    PORTE |= 1 << pin_struct->pin;
-                }
-                else if (pin_struct->pull_up == NO_PULL_UP) {
-                    PORTE &= ~(1 << pin_struct->pin);
-                }
-            }
-
-            break;
-        }
-
-        case PF:
-        {
-            if (pin_struct->direction == OUTPUT) {
-                DDRF |= 1 << pin_struct->pin;
-            }
-            else if (pin_struct->direction == INPUT) {
-                DDRF &= ~(1 << pin_struct->pin);
-
-                if (pin_struct->pull_up == PULL_UP) {
-                    PORTF |= 1 << pin_struct->pin;
-                }
-                else if (pin_struct->pull_up == NO_PULL_UP) {
-                    PORTF &= ~(1 << pin_struct->pin);
-                }
-            }
+        case INPUT_PULLUP: {
+            *pin_struct->direction_reg &=
+                ~(1 << (pin_struct->pin_and_direction & PIN_MASK));
+                                                // write 0 to DDRxn
+            *pin_struct->port |=
+                1 << (pin_struct->pin_and_direction & PIN_MASK);
+                                                // write 1 to PORTxn
 
             break;
         }
     }
 
-    
+    return PIN_INIT_OK;
 }
 
 unsigned char pin_write(struct Pin *pin_struct, unsigned char state) {
-    if (pin_struct->direction != OUTPUT) {
+    // check if pin is not configured as output or if given state is invalid
+    if ((pin_struct->pin_and_direction >> 4) != OUTPUT) {
         return PIN_WRITE_INVALID_DIRECTION;
-    }
-    else if (state > HIGH) {
+    } else if (state > HIGH) {
         return PIN_WRITE_INVALID_STATE;
     }
 
-    switch (pin_struct->port) {
-        case PB:
-        {
-            if (state == HIGH) {
-                PORTB |= 1 << pin_struct->pin;
-            }
-            else if (state == LOW) {
-                PORTB &= ~(1 << pin_struct->pin);
-            }
-
-            break;
-        }
-
-        case PC:
-        {
-            if (state == HIGH) {
-                PORTC |= 1 << pin_struct->pin;
-            }
-            else if (state == LOW) {
-                PORTC &= ~(1 << pin_struct->pin);
-            }
-
-            break;
-        }
-
-        case PD:
-        {
-            if (state == HIGH) {
-                PORTD |= 1 << pin_struct->pin;
-            }
-            else if (state == LOW) {
-                PORTD &= ~(1 << pin_struct->pin);
-            }
-
-            break;
-        }
-
-        case PE:
-        {
-            if (state == HIGH) {
-                PORTE |= 1 << pin_struct->pin;
-            }
-            else if (state == LOW) {
-                PORTE &= ~(1 << pin_struct->pin);
-            }
-
-            break;
-        }
-
-        case PF:
-        {
-            if (state == HIGH) {
-                PORTF |= 1 << pin_struct->pin;
-            }
-            else if (state == LOW) {
-                PORTF &= ~(1 << pin_struct->pin);
-            }
-
-            break;
-        }
+    if (state == HIGH) {
+        *pin_struct->port |= 1 << (pin_struct->pin_and_direction & PIN_MASK);
+                                                // write 1 to PORTxn
+    } else if (state == LOW) {
+        *pin_struct->port &=
+            ~(1 << (pin_struct->pin_and_direction & PIN_MASK));
+                                                // write 0 to PORTxn
     }
 
     return PIN_WRITE_OK;
 }
 
 unsigned char pin_read(struct Pin *pin_struct) {
-    unsigned char pin_read_state = 0;
-    unsigned char read_mask = 1 << pin_struct->pin;
-
-    switch (pin_struct->port) {
-        case PB:
-        {
-            return pin_read_state = (PINB & read_mask) >> pin_struct->pin;
-        }
-
-        case PC:
-        {
-            return pin_read_state = (PINC & read_mask) >> pin_struct->pin;
-        }
-
-        case PD:
-        {
-            return pin_read_state = (PIND & read_mask) >> pin_struct->pin;
-        }
-
-        case PE:
-        {
-            return pin_read_state = (PINE & read_mask) >> pin_struct->pin;
-        }
-
-        case PF:
-        {
-            return pin_read_state = (PINF & read_mask) >> pin_struct->pin;
-        }
-    }
+    // (PINx & (1 << PINxn)) >> PINxn    (equals 0 or 1)
+    // AND PINx with one shifted to PINxn, then shift pin number times to right
+    // in order for return to be 0 or 1
+    return (*pin_struct->pin_reg &
+        (1 << (pin_struct->pin_and_direction & PIN_MASK))) >>
+        (pin_struct->pin_and_direction & PIN_MASK);
 }
 
 void pin_toggle(struct Pin *pin_struct) {
-    switch (pin_struct->port) {
-        case PB:
-        {
-            PINB |= 1 << pin_struct->pin;
-        }
-
-        case PC:
-        {
-            PINC |= 1 << pin_struct->pin;
-        }
-
-        case PD:
-        {
-            PIND |= 1 << pin_struct->pin;
-        }
-
-        case PE:
-        {
-            PINE |= 1 << pin_struct->pin;
-        }
-
-        case PF:
-        {
-            PINF |= 1 << pin_struct->pin;
-        }
-    }
-}
-
-void global_pullup_disable() {
-    MCUCR |= 1 << PUD;
-}
-
-void global_pullup_enable() {
-    MCUCR &= ~(1 << PUD);
+    *pin_struct->pin_reg |= 1 << (pin_struct->pin_and_direction & PIN_MASK);
+                                                // write 1 to PINxn
 }
