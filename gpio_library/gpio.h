@@ -3,7 +3,7 @@
 
 #include <avr/io.h>
 
-#define PIN_MASK 7
+#define PIN_MASK 0b111
 
 enum Pin_direction {    // possible directions for a pin
     INPUT,
@@ -23,9 +23,16 @@ typedef struct Pin {    // struct describing a pin
     unsigned char pin_and_direction;
 } Pin;
 
+enum Init_returns {
+    PIN_INIT_OK,
+    PIN_INIT_INVALID_PORT,
+    PIN_INIT_INVALID_PIN,
+    PIN_INIT_INVALID_DIRECTION
+};
+
 // function initializing a pin
-void pin_init(struct Pin *pin_struct, volatile unsigned char *port,
-            unsigned char pin, unsigned char direction);
+unsigned char pin_init(struct Pin *pin_struct, volatile unsigned char *port,
+                        unsigned char pin, unsigned char direction);
 
 
 enum Write_returns {    // enum holding possible returns of pin_write function

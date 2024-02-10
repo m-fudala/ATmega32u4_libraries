@@ -1,25 +1,55 @@
 #include "gpio.h"
 
-void pin_init(struct Pin *pin_struct, volatile unsigned char *port,
-            unsigned char pin, unsigned char direction) {
+unsigned char pin_init(struct Pin *pin_struct, volatile unsigned char *port,
+                        unsigned char pin, unsigned char direction) {
     pin_struct->port = (unsigned char *) port;
     pin_struct->pin_and_direction = pin | (direction << 4);
 
     if (pin_struct->port == (unsigned char *) &PORTB) {
+        if ((pin_struct->pin_and_direction & PIN_MASK) > 7) {
+            return PIN_INIT_INVALID_PIN;
+        }
+
         pin_struct->direction_reg = (unsigned char *) &DDRB;
         pin_struct->pin_reg = (unsigned char *) &PINB;
     } else if (pin_struct->port == (unsigned char *) &PORTC) {
+        if (((pin_struct->pin_and_direction & PIN_MASK) > 7) || 
+            ((pin_struct->pin_and_direction & PIN_MASK) < 6)) {
+            return PIN_INIT_INVALID_PIN;
+        }
+
         pin_struct->direction_reg = (unsigned char *) &DDRC;
         pin_struct->pin_reg = (unsigned char *) &PINC;
     } else if (pin_struct->port == (unsigned char *) &PORTD) {
+        if ((pin_struct->pin_and_direction & PIN_MASK) > 7) {
+            return PIN_INIT_INVALID_PIN;
+        }
+
         pin_struct->direction_reg = (unsigned char *) &DDRD;
         pin_struct->pin_reg = (unsigned char *) &PIND;
     } else if (pin_struct->port == (unsigned char *) &PORTE) {
+        if (((pin_struct->pin_and_direction & PIN_MASK) != 2) || 
+            ((pin_struct->pin_and_direction & PIN_MASK) != 6)) {
+            return PIN_INIT_INVALID_PIN;
+        }
+
         pin_struct->direction_reg = (unsigned char *) &DDRE;
         pin_struct->pin_reg = (unsigned char *) &PINE;
     } else if (pin_struct->port == (unsigned char *) &PORTF) {
+        if (((pin_struct->pin_and_direction & PIN_MASK) > 7) || 
+            ((pin_struct->pin_and_direction & PIN_MASK) == 2) || 
+            ((pin_struct->pin_and_direction & PIN_MASK) == 3)) {
+            return PIN_INIT_INVALID_PIN;
+        }
+        
         pin_struct->direction_reg = (unsigned char *) &DDRF;
         pin_struct->pin_reg = (unsigned char *) &PINF;
+    } else {
+        return PIN_INIT_INVALID_PORT;
+    }
+
+    if ((pin_struct->pin_and_direction >> 4) > INPUT_PULLUP) {
+        return PIN_INIT_INVALID_DIRECTION;
     }
 
     switch (pin_struct->pin_and_direction >> 4) {
@@ -47,7 +77,9 @@ void pin_init(struct Pin *pin_struct, volatile unsigned char *port,
 
             break;
         }
-    }   
+    }
+
+    return PIN_INIT_OK;
 }
 
 unsigned char pin_write(struct Pin *pin_struct, unsigned char state) {
