@@ -2,7 +2,7 @@
 
 int main()
 {
-    struct Pin LED, Button;
+    Pin LED, Button;
     pin_init(&LED, &PORTC, PC6, OUTPUT);
     pin_init(&Button, &PORTD, PD7, INPUT_PULLUP);
 
