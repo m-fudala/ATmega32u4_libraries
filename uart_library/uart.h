@@ -13,11 +13,21 @@
 
 #define UART_BUFFER_SIZE 32
 
-#define uart_start(...) uart_struct_init((UART){__VA_ARGS__});
+#define uart_start(BAUD, ...) uart_struct_init((BAUD), (UART){__VA_ARGS__});
 
 #define UART_DATA_REGISTER_EMPTY (UCSR1A & _BV(UDRE1))
 #define UART_TRANSMIT_COMPLETE (UCSR1A & _BV(TXC1))
 #define UART_INCOMING_BYTES_PRESENT (UCSR1A & _BV(RXC1))
+
+enum Baud_rate {
+    BAUD_9600,
+    BAUD_19_2K,
+    BAUD_38_4K,
+    BAUD_76_8K,
+    BAUD_250K,
+    BAUD_500K,
+    BAUD_1M,
+};
 
 enum Character_size {
     BIT_5,
@@ -39,6 +49,8 @@ enum Parity {
 
 typedef struct
 {
+    unsigned char baud_rate;
+
     struct {
         unsigned char character_size : 3;
         unsigned char stop_bits : 1;
@@ -59,14 +71,14 @@ enum Message_readiness {
 };
 
 /*
-    Function initializing UART
+    Function initializing struct with UART configuration
 
     Parameters:
 
     Returns:
 */
 
-void uart_struct_init();
+void uart_struct_init(unsigned char baud_rate, UART uart_proto);
 
 /*
     Function initializing UART

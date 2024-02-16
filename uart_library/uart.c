@@ -2,15 +2,17 @@
 
 UART uart;
 
-void uart_struct_init() {
+void uart_struct_init(unsigned char baud_rate, UART uart_proto) {
+    uart.baud_rate = baud_rate;
+
     uart.uart_config.character_size =
-        uart.uart_config.character_size ? uart.uart_config.character_size
-        : BIT_8;
+        uart_proto.uart_config.character_size ?
+        uart_proto.uart_config.character_size : BIT_8;
     uart.uart_config.stop_bits =
-        uart.uart_config.stop_bits ? uart.uart_config.stop_bits
+        uart_proto.uart_config.stop_bits ? uart_proto.uart_config.stop_bits
         : STOP_BIT_1;
     uart.uart_config.parity =
-        uart.uart_config.parity ? uart.uart_config.parity
+        uart_proto.uart_config.parity ? uart_proto.uart_config.parity
         : NONE;
 
     uart.uart_bytes_unread = 0;
@@ -22,7 +24,57 @@ void uart_struct_init() {
 void uart_init() {
     cli();
 
-    UBRR1L = 3;   // 250k baud
+    switch (uart.baud_rate)
+    {
+        case BAUD_9600: {
+            UBRR1H = 0;
+            UBRR1L = 103;
+
+            break;
+        }
+
+        case BAUD_19_2K: {
+            UBRR1H = 0;
+            UBRR1L = 51;
+
+            break;
+        }
+
+        case BAUD_38_4K: {
+            UBRR1H = 0;
+            UBRR1L = 25;
+
+            break;
+        }
+
+        case BAUD_76_8K: {
+            UBRR1H = 0;
+            UBRR1L = 12;
+
+            break;
+        }
+
+        case BAUD_250K: {
+            UBRR1H = 0;
+            UBRR1L = 3;
+
+            break;
+        }
+
+        case BAUD_500K: {
+            UBRR1H = 0;
+            UBRR1L = 1;
+
+            break;
+        }
+
+        case BAUD_1M: {
+            UBRR1H = 0;
+            UBRR1L = 0;
+
+            break;
+        }
+    }
     
     UCSR1C |= uart.uart_config.character_size << 1;     // character size
     UCSR1C |= uart.uart_config.stop_bits << 2;     // number of stop bits
