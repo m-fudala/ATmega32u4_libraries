@@ -9,9 +9,17 @@
 #define UART_H_
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
+
+#define UART_BUFFER_SIZE 32
 
 #define UART_DATA_REGISTER_EMPTY (UCSR1A & _BV(UDRE1))
+#define UART_TRANSMIT_COMPLETE (UCSR1A & _BV(TXC1))
 #define UART_INCOMING_BYTES_PRESENT (UCSR1A & _BV(RXC1))
+
+volatile unsigned char buf[UART_BUFFER_SIZE];
+volatile unsigned char bytes_unread;
+volatile unsigned char message_ready;
 
 /*
     Function initializing UART
@@ -39,10 +47,14 @@ void uart_send(unsigned char *bytes, unsigned char no_of_bytes);
     Function reading incoming bytes to given buffer
 
     Parameters:
+        buffer - pointer to buffer to which incoming bytes will be saved
+        no_of_bytes - number of bytes to read
 
     Returns:
 */
 
-void uart_read();
+void uart_read(unsigned char *buffer, unsigned char no_of_bytes);
+
+unsigned char get_unread_bytes();
 
 #endif
