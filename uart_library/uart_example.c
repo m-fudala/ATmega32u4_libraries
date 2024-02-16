@@ -11,17 +11,20 @@ int main()
 {
     USBCON = 0;
 
-    uart_init();
+    uart_start();
+
+    // uart_start(.uart_config.character_size = BIT_6,
+    //             .uart_config.parity = ODD);
 
     unsigned char hello[14] = "Hello, world!";
 
-    uart_send(hello, sizeof(hello) / sizeof(unsigned char));
+    uart_send(hello, sizeof(hello) / sizeof(unsigned char) - 1);
 
     // Pin LED;
     // pin_init(&LED, &PORTC, PC6, OUTPUT);
 
     while (1) {
-        if (message_ready) {
+        if (check_message_readiness()) {
             // pin_write(&LED, HIGH);
 
             unsigned char read_buffer[10] = {' '};
