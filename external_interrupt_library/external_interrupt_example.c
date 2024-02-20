@@ -9,24 +9,29 @@
 #include "external_interrupt.h"
 #include "../gpio_library/gpio.h"
 
-Pin LED;
+Pin LED;    // initialize Pin struct for an LED as a global variable, in order
+            // to be used in interrupt handler
 
-void int6_interrupt_handler();
+void led_toggle();  // function prototype
 
 int main()
 {
+    // initialize LED and Button pins
     Pin Button;
     pin_init(&LED, &PORTC, PC6, OUTPUT);
     pin_init(&Button, &PORTE, PE6, INPUT);
 
-    int_init(INT6, int6_interrupt_handler, FALLING_EDGE);
-    int_enable(INT6);
+    int_init(INT6, led_toggle, FALLING_EDGE);   // set interrupt to trigger on
+                                                // falling edge
+
+    int_enable(INT6);   // enable interrupt
 
     while (1);
 
     return 0;
 }
 
-void int6_interrupt_handler() {
-    pin_toggle(&LED);
+// function called in interrupt handler
+void led_toggle() {
+    pin_toggle(&LED);   // toggling the LED pin
 }

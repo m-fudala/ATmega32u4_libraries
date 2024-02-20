@@ -4,6 +4,8 @@ void int_init(unsigned char interrupt_number, void (*int_function)(void),
         unsigned char int_level) {
     cli();
 
+    // set pointer to function that is to be executed in ISR and interrupt
+    // level 
     switch (interrupt_number)
     {
         case INT0: {
@@ -55,15 +57,16 @@ void int_init(unsigned char interrupt_number, void (*int_function)(void),
 }
 
 void int_enable(unsigned char interrupt_number) {
-    EIMSK |= _BV(interrupt_number);
+    EIMSK |= _BV(interrupt_number);     // set bit in interrupt mask register
 }
 
 void int_disable(unsigned char interrupt_number) {
-    EIMSK &= ~_BV(interrupt_number); 
+    EIMSK &= ~_BV(interrupt_number);    // clear bit in interrupt mask register
 }
 
+// interrupt handler for interrupt zero
 ISR (INT0_vect) {
-    int0_function_pointer();
+    int0_function_pointer();    // call appropiate function 
 }
 
 ISR (INT1_vect) {
