@@ -10,15 +10,12 @@
 
 #include <avr/io.h>
 
-#define PIN_MASK 0b111  // mask used for reading pin number from
-                        // pin_and_direction variable in Pin
-
 #define PULLUP_GLOBAL_DISABLE MCUCR |= _BV(PUD)     // disable pull-ups
 #define PULLUP_GLOBAL_ENABLE MCUCR &= ~_BV(PUD)   // enable pull-ups
 
 enum Pin_direction {    // possible directions for a pin
-    INPUT,
     OUTPUT,
+    INPUT,
     INPUT_PULLUP
 };
 
@@ -31,9 +28,11 @@ typedef struct Pin {    // struct describing a pin
     unsigned char *port;                // pointer to PORTxn register
     unsigned char *direction_reg;       // pointer to DDRxn register
     unsigned char *pin_reg;             // pointer to PINxn register
-    unsigned char pin_and_direction;    // pin's number and direction
-                                        // bits 0-2 -> number
-                                        // bits 4-5 -> direction
+
+    struct {
+        unsigned char pin : 3;
+        unsigned char direction : 2;
+    } config;
 } Pin;
 
 enum Init_returns {    // enum holding possible returns of pin_init function
@@ -56,9 +55,31 @@ enum Init_returns {    // enum holding possible returns of pin_init function
         value from enum Init_returns
 */
 
-unsigned char pin_init(struct Pin *pin_struct, volatile unsigned char *port,
+unsigned char pin_init(Pin *pin_struct, volatile unsigned char *port,
                         unsigned char pin, unsigned char direction);
 
+enum Direction_returns {    // enum holding possible returns of pin_init function
+    PIN_DIRECTION_OK,
+    PIN_DIRECTION_INVALID = 4
+};
+
+/*
+    Function setting direction of a pin
+
+    Comments:
+        Function manipulates bits in DDRxn register, therefore depending on
+        values in PORTxn, there can be some undefined behaviour after changing
+        direction
+        E.g.: OUTPUT HIGH becomes INPUT PULL-UP
+
+    Parameters:
+        pin_struct - pointer to struct of type Pin
+
+    Returns:
+        value from enum Direction_returns
+*/
+
+unsigned char pin_set_direction(Pin *pin_struct, unsigned char direction);
 
 enum Write_returns {    // enum holding possible returns of pin_write function
     PIN_WRITE_OK,
@@ -80,7 +101,7 @@ enum Write_returns {    // enum holding possible returns of pin_write function
         value from enum Write_returns
 */
 
-unsigned char pin_write(struct Pin *pin_struct, unsigned char state);
+unsigned char pin_write(Pin *pin_struct, unsigned char state);
 
 /*
     Function reading input of a pin
@@ -95,7 +116,7 @@ unsigned char pin_write(struct Pin *pin_struct, unsigned char state);
         value from enum Pin_state
 */
 
-unsigned char pin_read(struct Pin *pin_struct);
+unsigned char pin_read(Pin *pin_struct);
 
 /*
     Function toggling a value in PORTx register
@@ -104,6 +125,6 @@ unsigned char pin_read(struct Pin *pin_struct);
         pin_struct - pointer to struct of type Pin
 */
 
-void pin_toggle(struct Pin *pin_struct);
+void pin_toggle(Pin *pin_struct);
 
 #endif
