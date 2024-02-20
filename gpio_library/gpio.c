@@ -4,7 +4,6 @@ unsigned char pin_init(Pin *pin_struct, volatile unsigned char *port,
                         unsigned char pin, unsigned char direction) {
     pin_struct->port = (unsigned char *) port;
     pin_struct->config.pin = pin;
-    pin_struct->config.direction = direction;
 
     // assign DDRx and PINx registers depending on provided port
     if (pin_struct->port == (unsigned char *) &PORTB) {
@@ -51,6 +50,16 @@ unsigned char pin_init(Pin *pin_struct, volatile unsigned char *port,
         return PIN_INIT_INVALID_PORT;   // when port was not recognized
     }
 
+    if (pin_set_direction(pin_struct, direction)) {
+        return PIN_INIT_INVALID_DIRECTION;
+    }
+
+    return PIN_INIT_OK;
+}
+
+unsigned char pin_set_direction(Pin *pin_struct, unsigned char direction) {
+    pin_struct->config.direction = direction;
+
     // check for pin direction validity
     if ((pin_struct->config.direction) > INPUT_PULLUP) {
         return PIN_INIT_INVALID_DIRECTION;
@@ -83,8 +92,6 @@ unsigned char pin_init(Pin *pin_struct, volatile unsigned char *port,
             break;
         }
     }
-
-    return PIN_INIT_OK;
 }
 
 unsigned char pin_write(Pin *pin_struct, unsigned char state) {

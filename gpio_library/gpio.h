@@ -58,6 +58,28 @@ enum Init_returns {    // enum holding possible returns of pin_init function
 unsigned char pin_init(Pin *pin_struct, volatile unsigned char *port,
                         unsigned char pin, unsigned char direction);
 
+enum Direction_returns {    // enum holding possible returns of pin_init function
+    PIN_DIRECTION_OK,
+    PIN_DIRECTION_INVALID = 4
+};
+
+/*
+    Function setting direction of a pin
+
+    Comments:
+        Function manipulates bits in DDRxn register, therefore depending on
+        values in PORTxn, there can be some undefined behaviour after changing
+        direction
+        E.g.: OUTPUT HIGH becomes INPUT PULL-UP
+
+    Parameters:
+        pin_struct - pointer to struct of type Pin
+
+    Returns:
+        value from enum Direction_returns
+*/
+
+unsigned char pin_set_direction(Pin *pin_struct, unsigned char direction);
 
 enum Write_returns {    // enum holding possible returns of pin_write function
     PIN_WRITE_OK,
