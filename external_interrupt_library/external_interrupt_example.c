@@ -19,8 +19,8 @@ int main()
     pin_init(&LED, &PORTC, PC6, OUTPUT);
     pin_init(&Button, &PORTE, PE6, INPUT);
 
-    int6_init(int6_interrupt_handler, FALLING_EDGE);
-    int6_enable();
+    int_init(INT6, int6_interrupt_handler, FALLING_EDGE);
+    int_enable(INT6);
 
     while (1);
 

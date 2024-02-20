@@ -26,37 +26,33 @@ void (*int3_function_pointer)(void);
 void (*int6_function_pointer)(void);
 
 /*
-    Functions initializing external interrupts
+    Function initializing external interrupts
 
     Parameters:
+        interrupt_number - number of interrupt to be controlled
         int_function - pointer to function that is to be called in ISR
         int_level - value from enum Interrupt_level
 */
 
-void int0_init(void (*int_function)(void), unsigned char int_level);
-void int1_init(void (*int_function)(void), unsigned char int_level);
-void int2_init(void (*int_function)(void), unsigned char int_level);
-void int3_init(void (*int_function)(void), unsigned char int_level);
-void int6_init(void (*int_function)(void), unsigned char int_level);
+void int_init(unsigned char interrupt_number, void (*int_function)(void),
+        unsigned char int_level);
 
 /*
-    Functions enabling specified interrupt
+    Function enabling specified interrupt
+
+    Parameters:
+        interrupt_number - number of interrupt to be enabled
 */
 
-void int0_enable();
-void int1_enable();
-void int2_enable();
-void int3_enable();
-void int6_enable();
+void int_enable(unsigned char interrupt_number);
 
 /*
-    Functions disabling specified interrupt
+    Function disabling specified interrupt
+
+    Parameters:
+        interrupt_number - number of interrupt to be disabled
 */
 
-void int0_disable();
-void int1_disable();
-void int2_disable();
-void int3_disable();
-void int6_disable();
+void int_disable(unsigned char interrupt_number);
 
 #endif
