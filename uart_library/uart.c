@@ -103,10 +103,27 @@ void uart_read(unsigned char *buffer, unsigned char no_of_bytes) {
 }
 
 unsigned char check_message_readiness() {
-    return uart.uart_status.message_ready;
+    if (uart.uart_status.frame_error) {
+        return MESSAGE_FRAME_ERROR;
+    } else if (uart.uart_status.data_overrun_error) {
+        return MESSAGE_DATA_OVERRUN_ERROR;
+    } else if (uart.uart_status.parity_error) {
+        return MESSAGE_PARITY_ERROR;
+    } else {
+        return uart.uart_status.message_ready;
+    }
 }
 
 ISR(USART1_RX_vect) {
+    if (UCSR1A & _BV(FE1)) {
+        uart.uart_status.frame_error = 1;
+    } else 
+    if (UCSR1A & _BV(DOR1)) {
+        uart.uart_status.data_overrun_error = 1;
+    } else if (UCSR1A & _BV(UPE1)) {
+        uart.uart_status.parity_error = 1;
+    }
+
     if (uart.uart_bytes_unread == UART_BUFFER_SIZE) {
         uart.uart_bytes_unread = 0;
     }

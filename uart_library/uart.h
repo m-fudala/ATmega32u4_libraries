@@ -60,13 +60,11 @@ typedef struct
 
     struct {
         volatile unsigned char message_ready : 1;
+        volatile unsigned char frame_error : 1;
+        volatile unsigned char data_overrun_error : 1;
+        volatile unsigned char parity_error : 1;
     } uart_status;
 } UART;
-
-enum Message_readiness {
-    MESSAGE_NOT_READY,
-    MESSAGE_READY
-};
 
 /*
     Function initializing struct with UART configuration
@@ -111,6 +109,14 @@ void uart_send(unsigned char *bytes, unsigned char no_of_bytes);
 */
 
 void uart_read(unsigned char *buffer, unsigned char no_of_bytes);
+
+enum Message_readiness {
+    MESSAGE_READY,
+    MESSAGE_NOT_READY,
+    MESSAGE_FRAME_ERROR,
+    MESSAGE_DATA_OVERRUN_ERROR,
+    MESSAGE_PARITY_ERROR
+};
 
 unsigned char check_message_readiness();
 

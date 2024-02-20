@@ -21,7 +21,9 @@ int main()
     unsigned char send_nok[6] = "NOK\r\n";
 
     while (1) {
-        if (check_message_readiness()) {
+        unsigned char message_ready = check_message_readiness();
+
+        if (message_ready == MESSAGE_READY) {
             uart_read(read_buffer,
                         sizeof(read_buffer) / sizeof(unsigned char));
 
@@ -33,6 +35,8 @@ int main()
                 uart_send(send_nok,
                         sizeof(send_nok) / sizeof(unsigned char) - 1);
             }
+        } else if (message_ready > MESSAGE_NOT_READY) {
+            // error handling
         }
     }
 
