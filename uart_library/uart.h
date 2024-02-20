@@ -16,8 +16,6 @@
 #define uart_start(BAUD, ...) uart_struct_init((BAUD), (UART){__VA_ARGS__});
 
 #define UART_DATA_REGISTER_EMPTY (UCSR1A & _BV(UDRE1))
-#define UART_TRANSMIT_COMPLETE (UCSR1A & _BV(TXC1))
-#define UART_INCOMING_BYTES_PRESENT (UCSR1A & _BV(RXC1))
 
 enum Baud_rate {
     BAUD_9600,
