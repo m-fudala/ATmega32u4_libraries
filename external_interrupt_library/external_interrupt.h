@@ -11,6 +11,19 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+enum Interrupt_level {
+    LOW_LEVEL,
+    ANY_EDGE,
+    FALLING_EDGE,
+    RISING_EDGE
+};
 
+void (*int6_function_pointer)(void);
+
+void int6_init(void (*int_function)(void), unsigned char int_level);
+
+void int6_enable();
+
+void int6_disable();
 
 #endif
