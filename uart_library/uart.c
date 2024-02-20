@@ -1,29 +1,35 @@
 #include "uart.h"
 
-UART uart;
+UART uart;      // definition of global UART struct
 
-void uart_struct_init(unsigned char baud_rate, UART uart_proto) {
-    uart.baud_rate = baud_rate;
+void uart_struct_init(unsigned char baud_rate, UART uart_default) {
+    uart.baud_rate = baud_rate;     // set baud rate
 
+    // set defaults for UART configuration, if no optional arguments were
+    // specified
     uart.uart_config.character_size =
-        uart_proto.uart_config.character_size ?
-        uart_proto.uart_config.character_size : BIT_8;
+        uart_default.uart_config.character_size ?
+        uart_default.uart_config.character_size : BIT_8;
     uart.uart_config.stop_bits =
-        uart_proto.uart_config.stop_bits ? uart_proto.uart_config.stop_bits
+        uart_default.uart_config.stop_bits ? uart_default.uart_config.stop_bits
         : STOP_BIT_1;
     uart.uart_config.parity =
-        uart_proto.uart_config.parity ? uart_proto.uart_config.parity
+        uart_default.uart_config.parity ? uart_default.uart_config.parity
         : NONE;
 
     uart.uart_bytes_unread = 0;
     uart.uart_status.message_ready = MESSAGE_NOT_READY;
+    uart.uart_status.frame_error = 0;
+    uart.uart_status.data_overrun_error = 0;
+    uart.uart_status.parity_error = 0;
 
-    uart_init();
+    uart_init();    // initialize UART with given configuration
 }
 
 void uart_init() {
     cli();
 
+    // set baud rate
     switch (uart.baud_rate)
     {
         case BAUD_9600: {
@@ -76,16 +82,19 @@ void uart_init() {
         }
     }
     
-    UCSR1C |= uart.uart_config.character_size << 1;     // character size
-    UCSR1C |= uart.uart_config.stop_bits << 2;     // number of stop bits
-    UCSR1C |= uart.uart_config.parity << 4;     // parity
+    UCSR1C |= uart.uart_config.character_size << 1;     // set character size
+    UCSR1C |= uart.uart_config.stop_bits << 2;     // set number of stop bits
+    UCSR1C |= uart.uart_config.parity << 4;     // set parity
 
-    UCSR1B |= _BV(RXCIE1) | _BV(RXEN1) | _BV(TXEN1);
+    UCSR1B |= _BV(RXCIE1) | _BV(RXEN1) | _BV(TXEN1);    // enable transmitter,
+                                                        // receiver and
+                                                        // receive interrupt
 
     sei();
 }
 
 void uart_send(unsigned char *bytes, unsigned char no_of_bytes) {
+    // write to transmission register byte by byte 
     for (unsigned char byte_no; byte_no < no_of_bytes; ++byte_no) {
         while (!UART_DATA_REGISTER_EMPTY);
 
@@ -94,15 +103,21 @@ void uart_send(unsigned char *bytes, unsigned char no_of_bytes) {
 }
 
 void uart_read(unsigned char *buffer, unsigned char no_of_bytes) {
+    // write received bytes to given buffer
     for (unsigned char byte_no; byte_no < no_of_bytes; ++byte_no) {
         buffer[byte_no] = uart.uart_buf[byte_no];
     }
 
-    uart.uart_status.message_ready = MESSAGE_NOT_READY;
+    // set status to initial values
     uart.uart_bytes_unread = 0;
+    uart.uart_status.message_ready = MESSAGE_NOT_READY;
+    uart.uart_status.frame_error = 0;
+    uart.uart_status.data_overrun_error = 0;
+    uart.uart_status.parity_error = 0;
 }
 
 unsigned char check_message_readiness() {
+    // check for errors and message readiness
     if (uart.uart_status.frame_error) {
         return MESSAGE_FRAME_ERROR;
     } else if (uart.uart_status.data_overrun_error) {
@@ -114,22 +129,25 @@ unsigned char check_message_readiness() {
     }
 }
 
+// UART receive interrupt handler
 ISR(USART1_RX_vect) {
+    // check for reception errors
     if (UCSR1A & _BV(FE1)) {
         uart.uart_status.frame_error = 1;
-    } else 
-    if (UCSR1A & _BV(DOR1)) {
+    } else if (UCSR1A & _BV(DOR1)) {
         uart.uart_status.data_overrun_error = 1;
     } else if (UCSR1A & _BV(UPE1)) {
         uart.uart_status.parity_error = 1;
     }
 
+    // reset to first byte in buffer if it is about to overflow
     if (uart.uart_bytes_unread == UART_BUFFER_SIZE) {
         uart.uart_bytes_unread = 0;
     }
 
-    uart.uart_buf[uart.uart_bytes_unread] = UDR1;
+    uart.uart_buf[uart.uart_bytes_unread] = UDR1;   // read received byte
 
+    // determine if message has been terminated
     if (uart.uart_buf[uart.uart_bytes_unread] == '\n') {
         uart.uart_status.message_ready = MESSAGE_READY;
     } else {
