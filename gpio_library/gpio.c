@@ -60,30 +60,25 @@ unsigned char pin_init(Pin *pin_struct, volatile unsigned char *port,
     switch (pin_struct->config.direction) {
         case OUTPUT: {
             *pin_struct->direction_reg |=
-                1 << pin_struct->config.pin;
-                                                // write 1 to DDRxn
+                1 << pin_struct->config.pin;    // write 1 to DDRxn
 
             break;
         }
         
         case INPUT: {
             *pin_struct->direction_reg &=
-                ~(1 << pin_struct->config.pin);
-                                                // write 0 to DDRxn
+                ~(1 << pin_struct->config.pin);     // write 0 to DDRxn
             *pin_struct->port &=
-                ~(1 << pin_struct->config.pin);
-                                                // write 0 to PORTxn
+                ~(1 << pin_struct->config.pin);     // write 0 to PORTxn
 
             break;
         }
 
         case INPUT_PULLUP: {
             *pin_struct->direction_reg &=
-                ~(1 << pin_struct->config.pin);
-                                                // write 0 to DDRxn
+                ~(1 << pin_struct->config.pin);     // write 0 to DDRxn
             *pin_struct->port |=
-                1 << pin_struct->config.pin;
-                                                // write 1 to PORTxn
+                1 << pin_struct->config.pin;    // write 1 to PORTxn
 
             break;
         }
@@ -101,12 +96,10 @@ unsigned char pin_write(Pin *pin_struct, unsigned char state) {
     }
 
     if (state == HIGH) {
-        *pin_struct->port |= 1 << pin_struct->config.pin;
-                                                // write 1 to PORTxn
+        *pin_struct->port |= 1 << pin_struct->config.pin; // write 1 to PORTxn
     } else if (state == LOW) {
         *pin_struct->port &=
-            ~(1 << pin_struct->config.pin);
-                                                // write 0 to PORTxn
+            ~(1 << pin_struct->config.pin);     // write 0 to PORTxn
     }
 
     return PIN_WRITE_OK;
@@ -117,11 +110,9 @@ unsigned char pin_read(Pin *pin_struct) {
     // AND PINx with one shifted to PINxn, then shift pin number times to right
     // in order for return to be 0 or 1
     return (*pin_struct->pin_reg &
-        (1 << pin_struct->config.pin)) >>
-        pin_struct->config.pin;
+        (1 << pin_struct->config.pin)) >> pin_struct->config.pin;
 }
 
 void pin_toggle(Pin *pin_struct) {
-    *pin_struct->pin_reg |= 1 << pin_struct->config.pin;
-                                                // write 1 to PINxn
+    *pin_struct->pin_reg |= 1 << pin_struct->config.pin; // write 1 to PINxn
 }

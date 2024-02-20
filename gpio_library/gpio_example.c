@@ -14,7 +14,7 @@ int main()
 
     unsigned char init_result = 0;  // returns from pin initialization
 
-    // initializing pin 5 as output and pin 6 as input with pull-ip
+    // initializing pin 5 as output and pin 6 as input with pull-up
     init_result += pin_init(&LED, &PORTC, PC6, OUTPUT);
     init_result += pin_init(&Button, &PORTD, PD7, INPUT_PULLUP);
 

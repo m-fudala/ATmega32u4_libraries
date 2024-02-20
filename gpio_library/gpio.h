@@ -14,8 +14,8 @@
 #define PULLUP_GLOBAL_ENABLE MCUCR &= ~_BV(PUD)   // enable pull-ups
 
 enum Pin_direction {    // possible directions for a pin
-    INPUT,
     OUTPUT,
+    INPUT,
     INPUT_PULLUP
 };
 
