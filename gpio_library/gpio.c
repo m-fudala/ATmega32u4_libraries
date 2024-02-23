@@ -30,7 +30,7 @@ unsigned char pin_init(Pin *pin_struct, volatile unsigned char *port,
         pin_struct->direction_reg = (unsigned char *) &DDRD;
         pin_struct->pin_reg = (unsigned char *) &PIND;
     } else if (pin_struct->port == (unsigned char *) &PORTE) {
-        if ((pin_struct->config.pin != 2) || 
+        if ((pin_struct->config.pin != 2) && 
             (pin_struct->config.pin != 6)) {
             return PIN_INIT_INVALID_PIN;
         }
